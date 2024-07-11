@@ -626,8 +626,8 @@ variable "cni_plugin" {
   description = "CNI plugin for k3s."
 
   validation {
-    condition     = contains(["flannel", "calico", "cilium"], var.cni_plugin)
-    error_message = "The cni_plugin must be one of \"flannel\", \"calico\", or \"cilium\"."
+    condition     = contains(["flannel", "calico", "cilium", "none"], var.cni_plugin)
+    error_message = "The cni_plugin must be one of \"flannel\", \"calico\", \"cilium\" or \"none\"."
   }
 }
 
@@ -1056,4 +1056,10 @@ variable "keep_disk_cp" {
   type        = bool
   default     = false
   description = "Whether to keep OS disks of nodes the same size when upgrading a control-plane node"
+}
+
+variable "disable_kustomization" {
+  description = "Disable Kustomization step."
+  type        = bool
+  default     = true
 }

@@ -29,6 +29,27 @@ resource "null_resource" "first_control_plane" {
     port           = var.ssh_port
   }
 
+  #
+  # Create k3s config files directory
+  #
+  provisioner "remote-exec" {
+    inline = [
+       "mkdir -p /var/lib/rancher/k3s/server",
+    ]
+  }
+
+  # Upload AdmissionConfiguration
+  # See: https://docs.k3s.io/security/hardening-guide
+  provisioner "file" {
+    # content = templatefile(
+    #   "${path.module}/templates/admission_configuration.yaml.tpl",
+    #   {
+        
+    #   })
+    source      = "${path.module}/templates/admission_configuration.yaml.tpl"
+    destination = "/var/lib/rancher/k3s/server/psa.yaml"
+  }
+
   # Generating k3s master config file
   provisioner "file" {
     content = yamlencode(
@@ -51,7 +72,7 @@ resource "null_resource" "first_control_plane" {
           service-cidr                = var.service_ipv4_cidr
           cluster-dns                 = var.cluster_dns_ipv4
         },
-        lookup(local.cni_k3s_settings, var.cni_plugin, {}),
+        # lookup(local.cni_k3s_settings, var.cni_plugin, {}),
         var.use_control_plane_lb ? {
           tls-san = concat([hcloud_load_balancer.control_plane.*.ipv4[0], hcloud_load_balancer_network.control_plane.*.ip[0]], var.additional_tls_sans)
           } : {
@@ -112,6 +133,7 @@ resource "random_password" "rancher_bootstrap" {
 
 # This is where all the setup of Kubernetes components happen
 resource "null_resource" "kustomization" {
+  count = local.disable_kustomization ? 0 : 1
   triggers = {
     # Redeploy helm charts when the underlying values change
     helm_values_yaml = join("---\n", [

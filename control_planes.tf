@@ -168,6 +168,27 @@ resource "null_resource" "control_planes" {
     port           = var.ssh_port
   }
 
+  #
+  # Create k3s config files directory
+  #
+  provisioner "remote-exec" {
+    inline = [
+       "mkdir -p /var/lib/rancher/k3s/server",
+    ]
+  }
+
+  # Upload AdmissionConfiguration
+  # See: https://docs.k3s.io/security/hardening-guide
+  provisioner "file" {
+    # content = templatefile(
+    #   "${path.module}/templates/admission_configuration.yaml.tpl",
+    #   {
+        
+    #   })
+    source      = "${path.module}/templates/admission_configuration.yaml.tpl"
+    destination = "/var/lib/rancher/k3s/server/psa.yaml"
+  }
+
   # Install k3s server
   provisioner "remote-exec" {
     inline = local.install_k3s_server
